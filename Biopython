@@ -1,0 +1,111 @@
+############################################################################
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+############################################################################
+Here is a step wise procedure of performing the given task.
+(Step 1):Download Fasta File. Retrieve genome data by downloading a Fasta file from the NCBI server.
+(Step 2):Create BED File.This BED file contains sequence identifiers, start, and end positions.
+(Step 3):Extracting Specific Sequence.Here i have extracted the sequence with identifier  "gi|58576|gb|X52226|Influenza" and saved it separately.
+(Step 4):Eliminate or remove the selected sequence with identifier "gi|58576|gb|X52226|Influenza" from the original Fasta file.
+(Step 5):Reverse Complement.Obtaining the reverse complement of the extracted sequence.
+(Step 6):Insert Nucleotide Change.Introducing a single nucleotide change at 1st position of the sequence. 
+(Step 7):Appending the Modified Sequence back to the original Fasta file.
+################################################################################
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+################################################################################
+
+from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+import requests
+
+# Step 1: Download the fasta file
+url = "https://ftp.ncbi.nlm.nih.gov/genomes/INFLUENZA/influenza.fna"
+filename = "influenza.fna"
+with open(filename, 'wb') as file:
+    file.write(requests.get(url).content)
+
+print("step1 completed successfully")
+
+# Step 2: Create a bed file
+bed_filename = "influenza.bed"
+with open(bed_filename, 'w') as bed_file:
+    for record in SeqIO.parse(filename, "fasta"):
+        bed_file.write(f"{record.id}\t1\t{len(record.seq)}\n")
+
+print("step2 completed successfully")
+
+# Step 3: Extract the subsequence
+identifier_to_extract = "gi|58576|gb|X52226|Influenza"
+output_filename = "step3_extracted_sequence.fasta"
+
+with open(filename, 'r') as fasta_file, open(output_filename, 'w') as output_file:
+    for record in SeqIO.parse(fasta_file, "fasta"):
+        if record.id == identifier_to_extract:
+            SeqIO.write([record], output_file, "fasta")
+            break
+
+print("step3 completed successfully")
+
+# Step 4: Remove the extracted subsequence from the original file
+sequences_to_keep = [record for record in SeqIO.parse(filename, "fasta") if record.id != identifier_to_extract]
+with open(filename, 'w') as updated_fasta_file:
+    SeqIO.write(sequences_to_keep, updated_fasta_file, "fasta")
+
+print("step4 completed successfully")
+
+# Step 5: Perform reverse complement on the extracted subsequence
+with open(output_filename, 'r') as extracted_file:
+    extracted_record = SeqIO.read(extracted_file, "fasta")
+    reversed_complement_sequence = str(extracted_record.seq.reverse_complement())
+
+reversed_complement_filename = "step5_reversed_complement_sequence.fasta"
+with open(reversed_complement_filename, 'w') as reversed_complement_file:
+    reversed_complement_record = SeqRecord(Seq(reversed_complement_sequence),
+                                           id=extracted_record.id + "_reversed_complement",
+                                           description="Reversed complement sequence")
+    SeqIO.write([reversed_complement_record], reversed_complement_file, "fasta")
+
+print("step5 completed successfully")
+
+# Step 6: Perform manipulation by inserting 1 nucleotide change
+modified_sequence = 'X' + reversed_complement_sequence[1:]
+
+modified_filename = "step6_modified_sequence.fasta"
+with open(modified_filename, 'w') as modified_file:
+    modified_record = SeqRecord(Seq(modified_sequence),
+                                id=extracted_record.id + "_modified",
+                                description="Modified sequence")
+    SeqIO.write([modified_record], modified_file, "fasta")
+
+print("step6 completed successfully")
+
+# Step 7: Append the changed sequence back into the main fasta file at the top
+updated_sequences = [modified_record] + sequences_to_keep
+
+with open(filename, 'w') as fasta_file:
+    SeqIO.write(updated_sequences, fasta_file, "fasta")
+
+print("step7 completed successfully")
+print("All the Output files created successfully and ready to view.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
